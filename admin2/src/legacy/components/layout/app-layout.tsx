@@ -65,7 +65,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <img
             src={`${BASE_PATH}/logo.png`}
             alt="Veg Spicy Hut Logo"
-            className="w-12 h-12 object-contain animate-pulse"
+            className="w-12 h-12 rounded-2xl object-cover animate-pulse"
           />
           <p className="text-foreground text-sm font-semibold">Loading Veg Spicy Hut Admin...</p>
         </div>
@@ -90,7 +90,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <img
             src={`${BASE_PATH}/logo.png`}
             alt="Veg Spicy Hut Logo"
-            className="w-11 h-11 object-contain"
+            className="w-11 h-11 rounded-2xl object-cover"
           />
           <span className="font-display font-extrabold text-[1.45rem] tracking-tight text-white">Veg Spicy Hut</span>
         </div>
@@ -147,7 +147,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <img
               src={`${BASE_PATH}/logo.png`}
               alt="Veg Spicy Hut Logo"
-              className="w-10 h-10 object-contain"
+              className="w-10 h-10 rounded-xl object-cover"
             />
             <h1 className="text-xl font-display font-bold text-foreground truncate">
               {allowedNavItems.find(i => location === i.href || (i.href !== "/" && location.startsWith(i.href)))?.label || "Dashboard"}
