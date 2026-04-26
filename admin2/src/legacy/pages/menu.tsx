@@ -460,7 +460,7 @@ export default function MenuManagement() {
 
       <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search food item" />
 
-      <Card className="p-4 md:p-5 space-y-3 border-dashed">
+      <Card className="p-4 md:p-5 space-y-3 border-dashed transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.10)]">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-base md:text-lg font-semibold">Add New Custom Food Item</h3>
           <Badge variant="outline">Future Menu</Badge>
@@ -515,7 +515,10 @@ export default function MenuManagement() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredItems.map((item) => (
-          <Card key={item.id} className="p-4 space-y-3">
+          <Card
+            key={item.id}
+            className="p-4 space-y-3 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_16px_34px_rgba(15,23,42,0.16)] hover:border-primary/35"
+          >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-start gap-2">
                 <input
