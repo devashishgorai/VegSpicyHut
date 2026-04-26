@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Printer, Trash2 } from "lucide-react";
 import {
+  createBridgeMenuItem,
   deleteBridgeMenuItem,
   fetchBridgeMenuGroups,
   getBridgeMenuGroups,
@@ -54,6 +55,12 @@ function getSectionTheme(title: string) {
   return { r: 31, g: 79, b: 219, textR: 238, textG: 243, textB: 255 };
 }
 
+function getPrintableSectionTitle(title: string) {
+  const key = title.toLowerCase();
+  if (key.includes("combo")) return "Pocket Friendly Combo";
+  return title;
+}
+
 export default function MenuManagement() {
   const [menuGroups, setMenuGroups] = useState<MenuGroupLite[]>(getBridgeMenuGroups);
   const [activeGroupId, setActiveGroupId] = useState(menuGroups[0]?.id || "");
@@ -62,6 +69,9 @@ export default function MenuManagement() {
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingPrices, setEditingPrices] = useState("");
+  const [newItemGroupId, setNewItemGroupId] = useState("");
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemPrices, setNewItemPrices] = useState("Regular:100");
 
   const activeGroup = menuGroups.find((group) => group.id === activeGroupId) || menuGroups[0];
 
@@ -80,6 +90,9 @@ export default function MenuManagement() {
 
     if (!refreshed.some((group) => group.id === activeGroupId)) {
       setActiveGroupId(refreshed[0]?.id || "");
+    }
+    if (!refreshed.some((group) => group.id === newItemGroupId)) {
+      setNewItemGroupId(refreshed[0]?.id || "");
     }
   }
 
@@ -149,9 +162,8 @@ export default function MenuManagement() {
       doc.setFontSize(20);
       doc.text("Veg Spicy Hut", pageW / 2, 12, { align: "center" });
 
-      const dateText = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
       doc.setFontSize(8);
-      doc.text(`Selected Today Menu - ${dateText}`, pageW / 2, 17, { align: "center" });
+      doc.text("Selected Today Menu", pageW / 2, 17, { align: "center" });
 
       return 22;
     }
@@ -183,7 +195,7 @@ export default function MenuManagement() {
       doc.setTextColor(122, 0, 0);
       doc.setFont("times", "bold");
       doc.setFontSize(8.5);
-      doc.text(group.title, x + nameW / 2, y + 5.3, { align: "center" });
+      doc.text(getPrintableSectionTitle(group.title), x + nameW / 2, y + 5.3, { align: "center" });
       doc.setFontSize(7.2);
       doc.text("Full\n[500ml]", x + nameW + priceW / 2, y + 2.7, { align: "center" });
       doc.text("Half\n[250ml]", x + nameW + priceW + priceW / 2, y + 2.7, { align: "center" });
@@ -342,6 +354,43 @@ export default function MenuManagement() {
     return Object.keys(nextPrices).length > 0 ? nextPrices : null;
   }
 
+  async function addNewCustomItem() {
+    const targetGroupId = newItemGroupId || activeGroupId || menuGroups[0]?.id || "";
+    const targetGroup = menuGroups.find((group) => group.id === targetGroupId);
+
+    if (!targetGroup) {
+      window.alert("Please select a menu section first.");
+      return;
+    }
+    if (!newItemName.trim()) {
+      window.alert("Please enter food name.");
+      return;
+    }
+
+    const parsed = parsePriceText(newItemPrices);
+    if (!parsed) {
+      window.alert("Use format like Full:200, Half:110 or Regular:90.");
+      return;
+    }
+
+    try {
+      await createBridgeMenuItem({
+        categoryId: targetGroup.id,
+        categoryTitle: targetGroup.title,
+        name: newItemName.trim(),
+        prices: parsed,
+      });
+      setNewItemName("");
+      setNewItemPrices("Regular:100");
+      setActiveGroupId(targetGroup.id);
+      await reloadMenu();
+      window.alert("New custom food item added.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to add menu item";
+      window.alert(message);
+    }
+  }
+
   function startEdit(item: { id: number; name: string; prices: Record<string, number> }) {
     setEditingItemId(item.id);
     setEditingName(item.name);
@@ -410,6 +459,42 @@ export default function MenuManagement() {
       </div>
 
       <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search food item" />
+
+      <Card className="p-4 md:p-5 space-y-3 border-dashed">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-base md:text-lg font-semibold">Add New Custom Food Item</h3>
+          <Badge variant="outline">Future Menu</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="space-y-1 md:col-span-1">
+            <p className="text-xs text-muted-foreground">Menu Section</p>
+            <select
+              value={newItemGroupId || activeGroupId}
+              onChange={(event) => setNewItemGroupId(event.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {menuGroups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1 md:col-span-1">
+            <p className="text-xs text-muted-foreground">Food Name</p>
+            <Input value={newItemName} onChange={(event) => setNewItemName(event.target.value)} placeholder="Ex: Paneer Tikka Roll" />
+          </div>
+          <div className="space-y-1 md:col-span-1">
+            <p className="text-xs text-muted-foreground">Prices</p>
+            <Input value={newItemPrices} onChange={(event) => setNewItemPrices(event.target.value)} placeholder="Regular:120 or Full:200, Half:110" />
+          </div>
+          <div className="md:col-span-1 flex items-end">
+            <Button type="button" className="w-full" onClick={addNewCustomItem}>
+              Add Item
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       <div className="flex flex-wrap gap-2">
         {menuGroups.map((group) => (
